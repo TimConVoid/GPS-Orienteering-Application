@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">My Project1</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="title_activity_maps_test_geofence">Map</string>
+</resources>
