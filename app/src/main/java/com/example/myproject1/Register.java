@@ -21,7 +21,7 @@ import com.google.firebase.auth.UserProfileChangeRequest;
 public class Register extends AppCompatActivity implements View.OnClickListener{
 
     ProgressBar progressBar;
-    EditText txtUser, txtPass, txtEmail, txtName;
+    EditText txtPass, txtEmail, txtName;
     private FirebaseAuth mAuth;
     FirebaseUser user;
 
