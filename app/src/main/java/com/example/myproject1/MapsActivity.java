@@ -157,13 +157,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
 
-                Intent intent = new Intent(MapsActivity.this, MapsActivity.class);
-
-
-
-                Looper locationLooper = Looper.myLooper();
-
-
                 try {
                     locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER,locationListener, null);
                 } catch (SecurityException e){

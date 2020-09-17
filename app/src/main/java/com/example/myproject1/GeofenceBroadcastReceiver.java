@@ -19,23 +19,17 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
     private static final String TAG = "GeofenceBroadcastReceiv";
     Context context;
 
-    public GeofenceBroadcastReceiver(Context context){
-        this.context=context;
-    }
-
     @Override
     public void onReceive(Context context, Intent intent) {
         // TODO: This method is called when the BroadcastReceiver is receiving
         // an Intent broadcast.
         Toast.makeText(context, "Geofence triggered...", Toast.LENGTH_SHORT).show();
-        updateButton();
-
-
-
+        context.sendBroadcast(new Intent("GEOFENCE_TRIGGERED"));
 
         NotificationHelper notificationHelper = new NotificationHelper(context);
 
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
+
 
         if (geofencingEvent.hasError()) {
             Log.d(TAG, "onReceive: Error receiving geofence event...");
@@ -64,11 +58,6 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
                 break;
         }
 
-    }
-    public void updateButton(){
-
-        Button button = ((Activity)context).findViewById(R.id.button_next);
-        button.setEnabled(true);
     }
 
 }

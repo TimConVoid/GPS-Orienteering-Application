@@ -9,8 +9,11 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -18,8 +21,10 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
+import android.location.LocationManager;
 import android.media.Image;
 import android.nfc.cardemulation.OffHostApduService;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.SystemClock;
@@ -55,7 +60,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.core.Constants;
-import com.google.firebase.database.core.Context;
 
 
 import java.util.ArrayList;
@@ -64,7 +68,7 @@ import java.util.List;
 public class Course extends AppCompatActivity implements SensorEventListener {
 
 
-    private float GEOFENCE_RADIUS = 25;
+    private float GEOFENCE_RADIUS = 30;
     private String GEOFENCE_ID = "SOME_GEOFENCE_ID";
 
     // Compass
@@ -82,7 +86,8 @@ public class Course extends AppCompatActivity implements SensorEventListener {
 
 
     private static final String TAG = "MyTag";
-    private static final int FINE_LOCATION_REQUEST_CODE = 5;
+    private int FINE_LOCATION_ACCESS_REQUEST_CODE = 10001;
+    private int BACKGROUND_LOCATION_ACCESS_REQUEST_CODE = 10002;
     private GeofencingClient geofencingClient;
     private GeofencingRequest geofencingRequest;
     //private Geofence geofence;
@@ -90,7 +95,7 @@ public class Course extends AppCompatActivity implements SensorEventListener {
     private GeofenceHelper geofenceHelper;
     List<Geofence> geofenceList = new ArrayList<>();
     TextView desc;
-    Button btnNext, btnLeader;
+    Button btnNext, btnLeader,btnStart;
     String courseName;
     GoogleMap mMap;
     Chronometer chronometer;
@@ -100,7 +105,9 @@ public class Course extends AppCompatActivity implements SensorEventListener {
     LocationRequest locationRequest;
     FusedLocationProviderClient fusedLocationProviderClient;
 
-    LocationListener locationListener;
+
+    private LocationListener locationListener;
+    LocationManager locationManager;
 
     // user details
     TextView userName;
@@ -108,27 +115,45 @@ public class Course extends AppCompatActivity implements SensorEventListener {
     String userid = user.getDisplayName();
 
 
+    Button btnGeofence;
 
-    GeofenceBroadcastReceiver geofenceBroadcastReceiver;
 
-     int count = 1;
+    int count = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_course);
 
+
+
+        registerReceiver(broadcastReceiver, new IntentFilter("GEOFENCE_TRIGGERED"));
+
+
+
+
         desc = findViewById(R.id.textView_desc);
 
 
         btnNext = findViewById(R.id.button_next);
 
+        btnGeofence = findViewById(R.id.btn_geofence);
         btnLeader = findViewById(R.id.btnLeaders);
+        btnStart = findViewById(R.id.button_start);
         btnLeader.setVisibility(View.GONE);
         btnLeader.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 moveToLeaders();
+            }
+        });
+        final LatLng latLng = new LatLng(65.03949, 154.39039);
+
+
+        btnGeofence.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addGeofence(latLng, 50);
             }
         });
 
@@ -151,34 +176,8 @@ public class Course extends AppCompatActivity implements SensorEventListener {
 
         chronometer.start();
 
-        locationListener = new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
 
-
-
-                location.getLatitude();
-                location.getLongitude();
-
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-
-            }
-        };
-
-        btnNext.setEnabled(false);
+       // btnNext.setEnabled(false);
 
         start();
 
@@ -192,11 +191,10 @@ public class Course extends AppCompatActivity implements SensorEventListener {
 
         enableUserLocation();
 
+        getLocationUpdates();
+
 
         Log.d("myExtra", courseName);
-
-        LatLng latLng = new LatLng(65.03949, 154.39039);
-
 
 
         FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -221,7 +219,8 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                     }
                 }
 
-                setInstructions(waypoints);
+
+
             }
 
             @Override
@@ -230,6 +229,73 @@ public class Course extends AppCompatActivity implements SensorEventListener {
             }
         });
 
+        btnStart.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (Build.VERSION.SDK_INT >= 29) {
+                    //We need background permission
+                    if (ContextCompat.checkSelfPermission(Course.this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        setInstructions(waypoints);
+                    } else {
+                        if (ActivityCompat.shouldShowRequestPermissionRationale(Course.this, Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
+                            //We show a dialog and ask for permission
+                            ActivityCompat.requestPermissions(Course.this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_ACCESS_REQUEST_CODE);
+                        } else {
+                            ActivityCompat.requestPermissions(Course.this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_ACCESS_REQUEST_CODE);
+                        }
+                    }
+
+                } else {
+                    setInstructions(waypoints);
+                }
+            }
+        });
+
+
+    }
+    BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            showNextBtn();
+        }
+    };
+
+    private void getLocationUpdates() {
+        locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+
+            }
+        };
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5, locationListener);
 
     }
 
@@ -277,10 +343,10 @@ public class Course extends AppCompatActivity implements SensorEventListener {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.
-                        permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_REQUEST_CODE);
+                        permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_ACCESS_REQUEST_CODE);
             } else {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.
-                        permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_REQUEST_CODE);
+                        permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_ACCESS_REQUEST_CODE);
             }
         }
     }
@@ -288,10 +354,11 @@ public class Course extends AppCompatActivity implements SensorEventListener {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == FINE_LOCATION_REQUEST_CODE) {
+        if (requestCode == FINE_LOCATION_ACCESS_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // first bg 2nd course
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     // TODO: Consider calling
                     //    ActivityCompat#requestPermissions
                     // here to request the missing permissions, and then overriding
@@ -302,10 +369,19 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                     return;
                 }
                 // mMap.setMyLocationEnabled(true);
-                Toast.makeText(getApplicationContext(), "Permission Granted hoe :)", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Permission Granted", Toast.LENGTH_SHORT).show();
             } else {
 
-                Toast.makeText(getApplicationContext(), "Dennniiiiieed :(", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Denied", Toast.LENGTH_SHORT).show();
+            }
+        }
+        if (requestCode == BACKGROUND_LOCATION_ACCESS_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                //We have the permission
+                Toast.makeText(this, "You can add geofences...", Toast.LENGTH_SHORT).show();
+            } else {
+                //We do not have the permission..
+                Toast.makeText(this, "Background location access is neccessary for geofences to trigger...", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -341,6 +417,8 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                     desc.setText(next);
                     count++;
                 }
+              //  hideNextBtn();
+
 
 
             }
@@ -386,6 +464,8 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                     public void onFailure(@NonNull Exception e) {
                         String errorMessage = geofenceHelper.getErrorString(e);
                         Log.d(TAG, "onFailure: " + errorMessage);
+                        Toast.makeText(getApplicationContext(), "Geofence Fucked", Toast.LENGTH_SHORT).show();
+
                     }
                 });
     }
@@ -488,4 +568,8 @@ public class Course extends AppCompatActivity implements SensorEventListener {
         btnNext.setEnabled(true);
 
     }
+    public void hideNextBtn(){
+        btnNext.setEnabled(false);
+    }
+
 }
