@@ -8,11 +8,17 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 public class UserDash extends AppCompatActivity {
 
     Button btnEditProfile;
     Button btnBrowseCourses;
+    Button btnLogout;
     TextView textView;
+    FirebaseAuth firebaseAuth;
+    FirebaseUser user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,7 +28,14 @@ public class UserDash extends AppCompatActivity {
         btnEditProfile = findViewById(R.id.btn_edit);
         btnBrowseCourses = findViewById(R.id.btn_browse);
         textView = findViewById(R.id.textView2);
+        btnLogout = findViewById(R.id.btn_logout);
 
+        btnLogout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                logOut();
+            }
+        });
 
         btnEditProfile.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -39,6 +52,7 @@ public class UserDash extends AppCompatActivity {
         });
 
 
+
     }
 
     private void moveToProfile() {
@@ -48,6 +62,12 @@ public class UserDash extends AppCompatActivity {
     }
     private void moveToCoursePicker() {
         Intent intent = new Intent(UserDash.this, CoursePicker.class);
+        startActivity(intent);
+    }
+    private void logOut(){
+
+        FirebaseAuth.getInstance().signOut();
+        Intent intent = new Intent(UserDash.this, MainActivity.class);
         startActivity(intent);
     }
 

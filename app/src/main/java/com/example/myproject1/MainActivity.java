@@ -7,6 +7,9 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 public class MainActivity extends AppCompatActivity {
 
     Button btnLogin;
@@ -18,15 +21,27 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+
         btnLogin = findViewById(R.id.btn_login);
+        if (FirebaseAuth.getInstance().getCurrentUser() != null){
+            btnLogin.setText("My Profile");
+        }
 
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                moveToLogin();
+                if(FirebaseAuth.getInstance().getCurrentUser() == null) {
+                    moveToLogin();
+                } else {
+                    moveToProfile();
+                }
             }
         });
+
+
+
 
         btnReg = findViewById(R.id.btn_reg);
 
@@ -62,5 +77,10 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(MainActivity.this, CoursePicker .class);
         startActivity(intent);
     }
+    public void moveToProfile(){
+        Intent intent = new Intent(MainActivity.this, UserDash.class);
+        startActivity(intent);
+    }
+
 
 }

@@ -22,7 +22,7 @@ public class LogIn extends AppCompatActivity implements View.OnClickListener {
     private FirebaseAuth mAuth;
     EditText  txtPass, txtEmail;
     ProgressBar progressBar;
-
+    FirebaseUser firebaseUser;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,6 +35,15 @@ public class LogIn extends AppCompatActivity implements View.OnClickListener {
         findViewById(R.id.btn_login).setOnClickListener(this);
 
         mAuth = FirebaseAuth.getInstance();
+
+        firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        if(firebaseUser != null){
+            Intent intent = new Intent(LogIn.this, UserDash.class);
+            startActivity(intent);
+        }
+
+
 
 
     }

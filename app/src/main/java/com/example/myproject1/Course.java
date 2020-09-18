@@ -1,12 +1,6 @@
 package com.example.myproject1;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -22,21 +16,22 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.media.Image;
-import android.nfc.cardemulation.OffHostApduService;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.SystemClock;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.RotateAnimation;
 import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.Geofence;
@@ -45,13 +40,9 @@ import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -59,8 +50,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.database.core.Constants;
-
 
 import java.util.ArrayList;
 import java.util.List;
@@ -115,7 +104,6 @@ public class Course extends AppCompatActivity implements SensorEventListener {
     String userid = user.getDisplayName();
 
 
-    Button btnGeofence;
 
 
     int count = 1;
@@ -127,6 +115,8 @@ public class Course extends AppCompatActivity implements SensorEventListener {
 
 
 
+
+
         registerReceiver(broadcastReceiver, new IntentFilter("GEOFENCE_TRIGGERED"));
 
 
@@ -134,10 +124,11 @@ public class Course extends AppCompatActivity implements SensorEventListener {
 
         desc = findViewById(R.id.textView_desc);
 
+        desc.setMovementMethod(new ScrollingMovementMethod());
 
         btnNext = findViewById(R.id.button_next);
 
-        btnGeofence = findViewById(R.id.btn_geofence);
+        btnNext.setVisibility(Button.INVISIBLE);
         btnLeader = findViewById(R.id.btnLeaders);
         btnStart = findViewById(R.id.button_start);
         btnLeader.setVisibility(View.GONE);
@@ -150,12 +141,6 @@ public class Course extends AppCompatActivity implements SensorEventListener {
         final LatLng latLng = new LatLng(65.03949, 154.39039);
 
 
-        btnGeofence.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                addGeofence(latLng, 50);
-            }
-        });
 
         userName = findViewById(R.id.txt_username);
 
@@ -177,7 +162,7 @@ public class Course extends AppCompatActivity implements SensorEventListener {
         chronometer.start();
 
 
-       // btnNext.setEnabled(false);
+        hideNextBtn();
 
         start();
 
@@ -248,6 +233,10 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                 } else {
                     setInstructions(waypoints);
                 }
+                btnStart.setVisibility(Button.INVISIBLE);
+                btnNext.setVisibility(Button.VISIBLE);
+
+
             }
         });
 
