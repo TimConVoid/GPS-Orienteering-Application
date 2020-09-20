@@ -51,6 +51,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -131,7 +132,6 @@ public class Course extends AppCompatActivity implements SensorEventListener {
         btnNext.setVisibility(Button.INVISIBLE);
         btnLeader = findViewById(R.id.btnLeaders);
         btnStart = findViewById(R.id.button_start);
-        btnLeader.setVisibility(View.GONE);
         btnLeader.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -159,10 +159,10 @@ public class Course extends AppCompatActivity implements SensorEventListener {
         chronometer = findViewById(R.id.chronometer);
 
 
-        chronometer.start();
 
 
-        hideNextBtn();
+
+        //hideNextBtn();
 
         start();
 
@@ -235,6 +235,8 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                 }
                 btnStart.setVisibility(Button.INVISIBLE);
                 btnNext.setVisibility(Button.VISIBLE);
+                btnLeader.setVisibility(Button.INVISIBLE);
+                chronometer.start();
 
 
             }
@@ -254,6 +256,14 @@ public class Course extends AppCompatActivity implements SensorEventListener {
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
+
+                LatLng latLng;
+                latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                FirebaseDatabase database = FirebaseDatabase.getInstance();
+                DatabaseReference myRef = database.getReference("Users/"+user.getUid()+"/Current Location/");
+                myRef.setValue(latLng);
+
+
 
             }
 
@@ -393,9 +403,9 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                     btnNext.setVisibility(View.GONE);
                     btnLeader.setVisibility(View.VISIBLE);
                     double elapsedMillis = SystemClock.elapsedRealtime() - chronometer.getBase();
-                    String chronoText = chronometer.getText().toString();
+                    DecimalFormat df = new DecimalFormat("#.##");
                     chronometer.stop();
-                    Toast.makeText(getApplicationContext(), "Course finished! Your time was: " + elapsedMillis*0.001, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Course finished! Your time was: " + df.format(elapsedMillis*0.00001), Toast.LENGTH_SHORT).show();
                     uploadTime(elapsedMillis);
 
                 } else {
@@ -453,7 +463,7 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                     public void onFailure(@NonNull Exception e) {
                         String errorMessage = geofenceHelper.getErrorString(e);
                         Log.d(TAG, "onFailure: " + errorMessage);
-                        Toast.makeText(getApplicationContext(), "Geofence Fucked", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "Geofence unavailable", Toast.LENGTH_SHORT).show();
 
                     }
                 });
@@ -468,6 +478,10 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                 sensorManager.unregisterListener(this, mRotationV);
             }
         }
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("Users/"+user.getUid()+"/Current Location/");
+        myRef.removeValue();
+
     }
 
     @Override
@@ -517,7 +531,11 @@ public class Course extends AppCompatActivity implements SensorEventListener {
     public void uploadTime(final double time) {
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
 
-        final double realTime = time*0.001;
+
+        final DecimalFormat df = new DecimalFormat("#.##");
+        final double realTime = time*0.00001;
+
+
 
         DatabaseReference myRef3 = database.getReference("Users/"+user.getUid()+"/Name");
         myRef3.setValue(user.getDisplayName());
@@ -530,17 +548,18 @@ public class Course extends AppCompatActivity implements SensorEventListener {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
 
                 if (snapshot.exists()) {
-                    double origTime = (double) snapshot.getValue();
+                    String origTime = (String) snapshot.getValue();
+                    double originalTime = Double.parseDouble(origTime);
 
-                    if (origTime > realTime) {
+                    if (originalTime > realTime) {
                         final DatabaseReference myRef1 = database.getReference("Users/" + user.getUid() + "/Times/" + courseName);
-                        myRef1.setValue(realTime);
+                        myRef1.setValue(df.format(realTime));
 
                     }
 
                 } else {
                     final DatabaseReference myRef1 = database.getReference("Users/" + user.getUid() + "/Times/" + courseName);
-                    myRef1.setValue(realTime);
+                    myRef1.setValue(df.format(realTime));
 
                 }
             }

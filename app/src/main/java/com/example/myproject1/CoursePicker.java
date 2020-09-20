@@ -18,6 +18,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -202,9 +203,15 @@ public class CoursePicker extends AppCompatActivity implements OnMapReadyCallbac
                        googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
                            @Override
                            public void onInfoWindowClick(Marker marker) {
-                               Intent intent = new Intent(CoursePicker.this, Course.class);
-                               intent.putExtra("CourseName", marker.getTitle());
-                               startActivity(intent);
+                               if(FirebaseAuth.getInstance().getCurrentUser()!=null) {
+                                   Intent intent = new Intent(CoursePicker.this, Course.class);
+                                   intent.putExtra("CourseName", marker.getTitle());
+                                   startActivity(intent);
+                               } else {
+                                   Intent intent = new Intent(CoursePicker.this,LeaderBoard.class);
+                                   intent.putExtra("CourseName", marker.getTitle());
+                                   startActivity(intent);
+                               }
                            }
                        });
 

@@ -52,7 +52,7 @@ public class LeaderBoard extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for(DataSnapshot sc : snapshot.getChildren()){
                     String name = (String) sc.child("Name").getValue();
-                    double time = (double) sc.child("Times").child(courseName).getValue();
+                    String time = (String) sc.child("Times").child(courseName).getValue();
                     UserTimes userTime= new UserTimes(name,courseName,time);
                     userTimes.add(userTime.getTime()+ ":        " +userTime.getName());
 

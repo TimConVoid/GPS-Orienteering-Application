@@ -1,2 +1,2 @@
-rootProject.name='My Project1'
+rootProject.name='naviMate'
 include ':app'

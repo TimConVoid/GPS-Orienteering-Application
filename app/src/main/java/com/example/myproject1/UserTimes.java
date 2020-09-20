@@ -4,13 +4,13 @@ public class UserTimes {
 
     private String name;
     private String course;
-    private double time;
+    private String time;
 
     private UserTimes(){
 
     }
 
-    public UserTimes(String name, String course, double time) {
+    public UserTimes(String name, String course, String time) {
         this.name = name;
         this.course = course;
         this.time = time;
@@ -32,11 +32,11 @@ public class UserTimes {
         this.course = course;
     }
 
-    public double getTime() {
+    public String getTime() {
         return time;
     }
 
-    public void setTime(double time) {
+    public void setTime(String time) {
         this.time = time;
     }
 }
