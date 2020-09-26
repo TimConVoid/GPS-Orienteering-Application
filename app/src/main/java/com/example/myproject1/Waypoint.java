@@ -19,13 +19,15 @@ public class Waypoint {
     private String description;
     private String imgSrc;
     private  String courseName;
+    private String difficulty;
 
-    public Waypoint(int id, LatLng coordinates, String description, String imgSrc, String courseName) {
+    public Waypoint(int id, LatLng coordinates, String description, String imgSrc, String courseName, String difficulty) {
         this.id = id;
         this.coordinates = coordinates;
         this.description = description;
         this.imgSrc = imgSrc;
         this.courseName = courseName;
+        this.difficulty = difficulty;
     }
 
     public int getId() {
@@ -66,5 +68,9 @@ public class Waypoint {
 
     public void setCourseName(String courseName) {
         this.courseName = courseName;
+    }
+
+    public String getDifficulty() {
+        return difficulty;
     }
 }

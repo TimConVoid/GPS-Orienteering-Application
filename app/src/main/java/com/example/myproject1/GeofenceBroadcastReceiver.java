@@ -1,11 +1,9 @@
 package com.example.myproject1;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.location.Geofence;
@@ -46,15 +44,15 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         switch (transitionType) {
             case Geofence.GEOFENCE_TRANSITION_ENTER:
                 Toast.makeText(context, "GEOFENCE_TRANSITION_ENTER", Toast.LENGTH_SHORT).show();
-                notificationHelper.sendHighPriorityNotification("GEOFENCE_TRANSITION_ENTER", "", MapsActivity.class);
+                notificationHelper.sendHighPriorityNotification("Waypoint Reached!", "", CourseCreator.class);
                 break;
             case Geofence.GEOFENCE_TRANSITION_DWELL:
                 Toast.makeText(context, "GEOFENCE_TRANSITION_DWELL", Toast.LENGTH_SHORT).show();
-                notificationHelper.sendHighPriorityNotification("GEOFENCE_TRANSITION_DWELL", "", MapsActivity.class);
+                notificationHelper.sendHighPriorityNotification("GEOFENCE_TRANSITION_DWELL", "", CourseCreator.class);
                 break;
             case Geofence.GEOFENCE_TRANSITION_EXIT:
                 Toast.makeText(context, "GEOFENCE_TRANSITION_EXIT", Toast.LENGTH_SHORT).show();
-                notificationHelper.sendHighPriorityNotification("GEOFENCE_TRANSITION_EXIT", "", MapsActivity.class);
+                notificationHelper.sendHighPriorityNotification("GEOFENCE_TRANSITION_EXIT", "", CourseCreator.class);
                 break;
         }
 

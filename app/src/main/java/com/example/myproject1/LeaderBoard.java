@@ -51,11 +51,14 @@ public class LeaderBoard extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 for(DataSnapshot sc : snapshot.getChildren()){
-                    String name = (String) sc.child("Name").getValue();
-                    String time = (String) sc.child("Times").child(courseName).getValue();
-                    UserTimes userTime= new UserTimes(name,courseName,time);
-                    userTimes.add(userTime.getTime()+ ":        " +userTime.getName());
+                    DataSnapshot times = sc.child("Times").child(courseName);
+                    if(times.exists()) {
+                        String name = (String) sc.child("Name").getValue();
+                        String time = (String) sc.child("Times").child(courseName).getValue();
+                        UserTimes userTime = new UserTimes(name, courseName, time);
+                        userTimes.add(userTime.getName() + ":        " +userTime.getTime() );
 
+                    }
                 }
                 Collections.sort(userTimes);
                 listView.setAdapter(arrayAdapter);

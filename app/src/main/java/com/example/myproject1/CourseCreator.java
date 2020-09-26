@@ -1,19 +1,25 @@
 package com.example.myproject1;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.Looper;
+import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -22,13 +28,20 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class CourseCreator extends FragmentActivity implements OnMapReadyCallback {
 
+        private static final int CHOOSE_IMAGE = 100;
         private GoogleMap mMap;
         private LocationListener locationListener;
         LocationManager locationManager;
@@ -37,12 +50,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         private LatLng latLng;
         Button button;
         Button buttonEnd;
+        ImageView imgMap;
         MarkerOptions place1;
         MarkerOptions place2;
         Polyline pLine;
         EditText desc;
         EditText name;
+        EditText difficulty;
         int id = 0;
+        Uri uriMapImg;
+        String mapImgURL;
+
 
 
     @Override
@@ -56,16 +74,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         button = findViewById(R.id.btnTakePoint);
         buttonEnd = findViewById(R.id.buttonEnd);
+        imgMap = findViewById(R.id.imageMap);
 
         desc = findViewById(R.id.editTextDesc);
 
         name = findViewById(R.id.edittxt_coursename);
+
+        difficulty = findViewById(R.id.txt_difficulty);
 
         ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, PackageManager.PERMISSION_GRANTED);
         ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, PackageManager.PERMISSION_GRANTED);
 
 
 
+        imgMap.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showImageChooser();
+            }
+        });
 
 
 
@@ -112,8 +139,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         mMap.addMarker(new MarkerOptions().position(latLng).title("My Location" +id));
                         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
 
-                        Waypoint waypoint = new Waypoint(id, latLng, desc.getText().toString(), "wiajdiawj", name.getText().toString());
+                        Waypoint waypoint = new Waypoint(id, latLng, desc.getText().toString(), mapImgURL, name.getText().toString(), difficulty.getText().toString());
                         desc.setText("");
+                        desc.setHint("Next instruction");
                         arrayList.add(waypoint);
 
                         float zoomLevel = 10.0f; //This goes up to 21
@@ -128,6 +156,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 uploadDetails(arrayList);
                                 System.out.println(arrayList.toString());
                                 locationManager.removeUpdates(locationListener);
+                                Toast.makeText(getApplicationContext(), "Course added", Toast.LENGTH_SHORT).show();
+                                Intent intent = new Intent(CourseCreator.this,AdminDash.class);
+                                startActivity(intent);
 
                             }
                         });
@@ -167,14 +198,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             }
         });
-
-
-
-
-
-
-
-
             }
 
     public void uploadDetails(ArrayList<Waypoint> wp){
@@ -187,5 +210,50 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             myRef.setValue(a);
 
         }
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == CHOOSE_IMAGE && resultCode == RESULT_OK && data != null && data.getData() != null){
+
+            uriMapImg = data.getData();
+            try {
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uriMapImg);
+                imgMap.setImageBitmap(bitmap);
+                uploadImageToFirebase();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    private void uploadImageToFirebase() {
+        final StorageReference profileImgRef = FirebaseStorage.getInstance().getReference("MapImages/" + System.currentTimeMillis() + ".jpg");
+
+        if (uriMapImg != null){
+            profileImgRef.putFile(uriMapImg).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+                    mapImgURL = taskSnapshot.getMetadata().getReference().getDownloadUrl().toString();
+
+                }
+            })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Toast.makeText(CourseCreator.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+
+                        }
+                    });
+        }
+
+    }
+    public void showImageChooser(){
+
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(intent, "Select Proifle Picture"), CHOOSE_IMAGE);
     }
 }

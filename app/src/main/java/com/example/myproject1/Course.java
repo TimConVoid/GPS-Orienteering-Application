@@ -58,8 +58,14 @@ import java.util.List;
 public class Course extends AppCompatActivity implements SensorEventListener {
 
 
+    // Geofence
     private float GEOFENCE_RADIUS = 30;
     private String GEOFENCE_ID = "SOME_GEOFENCE_ID";
+    private int FINE_LOCATION_ACCESS_REQUEST_CODE = 10001;
+    private int BACKGROUND_LOCATION_ACCESS_REQUEST_CODE = 10002;
+    private GeofencingClient geofencingClient;
+    private GeofenceHelper geofenceHelper;
+    private static final String TAG = "MyTag";
 
     // Compass
     private ImageView imageView;
@@ -74,61 +80,33 @@ public class Course extends AppCompatActivity implements SensorEventListener {
     private boolean mLastAccelerometerSet = false;
     private boolean mLastMagneticSet = false;
 
-
-    private static final String TAG = "MyTag";
-    private int FINE_LOCATION_ACCESS_REQUEST_CODE = 10001;
-    private int BACKGROUND_LOCATION_ACCESS_REQUEST_CODE = 10002;
-    private GeofencingClient geofencingClient;
-    private GeofencingRequest geofencingRequest;
-    //private Geofence geofence;
-    private PendingIntent geofencePendingIntent;
-    private GeofenceHelper geofenceHelper;
-    List<Geofence> geofenceList = new ArrayList<>();
+    // UI
     TextView desc;
     Button btnNext, btnLeader,btnStart;
     String courseName;
-    GoogleMap mMap;
     Chronometer chronometer;
     ArrayList<Waypoint> waypoints = new ArrayList<>();
-    final int RADIUS = 25;
-    Location location;
-    LocationRequest locationRequest;
-    FusedLocationProviderClient fusedLocationProviderClient;
 
-
+    // Location
     private LocationListener locationListener;
     LocationManager locationManager;
 
-    // user details
+    // User details
     TextView userName;
     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
     String userid = user.getDisplayName();
 
-
-
-
-    int count = 1;
+    //Counter for clickListener
+    int count = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_course);
-
-
-
-
-
         registerReceiver(broadcastReceiver, new IntentFilter("GEOFENCE_TRIGGERED"));
-
-
-
-
         desc = findViewById(R.id.textView_desc);
-
         desc.setMovementMethod(new ScrollingMovementMethod());
-
         btnNext = findViewById(R.id.button_next);
-
         btnNext.setVisibility(Button.INVISIBLE);
         btnLeader = findViewById(R.id.btnLeaders);
         btnStart = findViewById(R.id.button_start);
@@ -139,70 +117,42 @@ public class Course extends AppCompatActivity implements SensorEventListener {
             }
         });
         final LatLng latLng = new LatLng(65.03949, 154.39039);
-
-
-
         userName = findViewById(R.id.txt_username);
-
         Bundle extras = getIntent().getExtras();
-
         courseName = extras.getString("CourseName");
-
         geofencingClient = LocationServices.getGeofencingClient(this);
-
         geofenceHelper = new GeofenceHelper(this);
-
         imageView = (ImageView) findViewById(R.id.compass);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         userName.setText(userid);
-
         chronometer = findViewById(R.id.chronometer);
-
-
-
-
-
-        //hideNextBtn();
-
         start();
-
-        //fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-
-        //ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PackageManager.PERMISSION_GRANTED);
-        //ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PackageManager.PERMISSION_GRANTED);
-
-        // locationRequest.setInterval(2000);
-
-
         enableUserLocation();
-
         getLocationUpdates();
-
-
-        Log.d("myExtra", courseName);
-
-
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         final DatabaseReference myRef = database.getReference().child("Courses").child(courseName);
-
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 for (DataSnapshot ds : dataSnapshot.getChildren()) {
                     for (DataSnapshot wp : ds.getChildren()) {
                         int id = wp.child("id").getValue(Integer.class);
-                        String desc = wp.child("description").getValue(String.class);
+                        String description = wp.child("description").getValue(String.class);
                         String imgSrc = wp.child("imgSrc").getValue(String.class);
                         double lat = wp.child("coordinates").child("latitude").getValue(Double.class);
                         double lon = wp.child("coordinates").child("longitude").getValue(Double.class);
                         final String courseName = wp.child("courseName").getValue(String.class);
+                        String difficulty = (String) wp.child("difficulty").getValue();
                         LatLng latLng = new LatLng(lat, lon);
 
-                        Waypoint waypoint = new Waypoint(id, latLng, desc, imgSrc, courseName);
+
+                        Waypoint waypoint = new Waypoint(id, latLng, description, imgSrc, courseName, difficulty);
                         waypoints.add(waypoint);
+                        setInitialDesc(difficulty,courseName,waypoints);
 
                     }
                 }
+
 
 
 
@@ -213,7 +163,6 @@ public class Course extends AppCompatActivity implements SensorEventListener {
 
             }
         });
-
         btnStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -236,13 +185,12 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                 btnStart.setVisibility(Button.INVISIBLE);
                 btnNext.setVisibility(Button.VISIBLE);
                 btnLeader.setVisibility(Button.INVISIBLE);
+                chronometer.setBase(SystemClock.elapsedRealtime());
                 chronometer.start();
 
 
             }
         });
-
-
     }
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -251,6 +199,10 @@ public class Course extends AppCompatActivity implements SensorEventListener {
             showNextBtn();
         }
     };
+
+    private void setInitialDesc(String difficulty, String CourseName, ArrayList<Waypoint> wp){
+        desc.setText("Course: "+CourseName+"\n Difficulty : "+difficulty + "\n Starting location: "+wp.get(0).getDescription());
+    }
 
     private void getLocationUpdates() {
         locationListener = new LocationListener() {
@@ -262,9 +214,6 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                 FirebaseDatabase database = FirebaseDatabase.getInstance();
                 DatabaseReference myRef = database.getReference("Users/"+user.getUid()+"/Current Location/");
                 myRef.setValue(latLng);
-
-
-
             }
 
             @Override
@@ -284,6 +233,7 @@ public class Course extends AppCompatActivity implements SensorEventListener {
         };
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
+
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -294,8 +244,7 @@ public class Course extends AppCompatActivity implements SensorEventListener {
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5, locationListener);
-
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,5000,5,locationListener);
     }
 
     public void start() {
@@ -316,6 +265,7 @@ public class Course extends AppCompatActivity implements SensorEventListener {
             haveSensor = sensorManager.registerListener(this, mRotationV, SensorManager.SENSOR_DELAY_UI);
 
         }
+        getLocationUpdates();
     }
 
     public void noSensorAlert() {
@@ -387,11 +337,13 @@ public class Course extends AppCompatActivity implements SensorEventListener {
 
 
     public void setInstructions(final ArrayList<Waypoint> wp) {
-        Waypoint first = wp.get(0);
+        hideNextBtn();
+        Waypoint first = wp.get(1);
         LatLng firstLatLng = first.getCoordinates();
         addGeofence(firstLatLng,GEOFENCE_RADIUS);
         String firstInst = first.getDescription();
         desc.setText(firstInst);
+        String difficulty = first.getDifficulty();
 
 
         btnNext.setOnClickListener(new View.OnClickListener() {
@@ -407,39 +359,35 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                     chronometer.stop();
                     Toast.makeText(getApplicationContext(), "Course finished! Your time was: " + df.format(elapsedMillis*0.00001), Toast.LENGTH_SHORT).show();
                     uploadTime(elapsedMillis);
+                    PendingIntent pendingIntent = geofenceHelper.getPendingIntent();
+                    geofencingClient.removeGeofences(pendingIntent);
 
                 } else {
                     Waypoint nextWaypoint = wp.get(count);
                     LatLng latLng = nextWaypoint.getCoordinates();
+
                     addGeofence(latLng,GEOFENCE_RADIUS);
                     String next = wp.get(count).getDescription();
                     desc.setText(next);
                     count++;
                 }
-              //  hideNextBtn();
-
-
-
+                hideNextBtn();
             }
         });
 
 
     }
-
-    private void moveToLeaders() {
+    public void moveToLeaders() {
 
         Intent intent = new Intent(Course.this, LeaderBoard.class);
         intent.putExtra("CourseName", courseName);
         startActivity(intent);
     }
 
-
-    private void addGeofence(LatLng latLng, float radius) {
-
+    public void addGeofence(LatLng latLng, float radius) {
         Geofence geofence = geofenceHelper.getGeofence(GEOFENCE_ID, latLng, radius, Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_DWELL | Geofence.GEOFENCE_TRANSITION_EXIT);
         GeofencingRequest geofencingRequest = geofenceHelper.getGeofencingRequest(geofence);
         PendingIntent pendingIntent = geofenceHelper.getPendingIntent();
-
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -478,24 +426,23 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                 sensorManager.unregisterListener(this, mRotationV);
             }
         }
+
+        locationManager.removeUpdates(locationListener);
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference myRef = database.getReference("Users/"+user.getUid()+"/Current Location/");
         myRef.removeValue();
 
     }
-
     @Override
     protected void onPause() {
         super.onPause();
         stop();
     }
-
     @Override
     protected void onResume() {
         super.onResume();
         start();
     }
-
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
@@ -519,48 +466,34 @@ public class Course extends AppCompatActivity implements SensorEventListener {
         }
         mAzimuth = Math.round(mAzimuth);
         imageView.setRotation(-mAzimuth);
-
-
     }
-
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
     }
-
     public void uploadTime(final double time) {
+        PendingIntent pendingIntent = geofenceHelper.getPendingIntent();
+        geofencingClient.removeGeofences(pendingIntent);
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
-
-
         final DecimalFormat df = new DecimalFormat("#.##");
         final double realTime = time*0.00001;
-
-
-
         DatabaseReference myRef3 = database.getReference("Users/"+user.getUid()+"/Name");
         myRef3.setValue(user.getDisplayName());
-
         DatabaseReference myRef2 = database.getReference().child("Users").child(user.getUid()).child("Times").child(courseName);
-
-
         myRef2.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-
                 if (snapshot.exists()) {
                     String origTime = (String) snapshot.getValue();
                     double originalTime = Double.parseDouble(origTime);
-
                     if (originalTime > realTime) {
                         final DatabaseReference myRef1 = database.getReference("Users/" + user.getUid() + "/Times/" + courseName);
                         myRef1.setValue(df.format(realTime));
 
                     }
-
                 } else {
                     final DatabaseReference myRef1 = database.getReference("Users/" + user.getUid() + "/Times/" + courseName);
                     myRef1.setValue(df.format(realTime));
-
                 }
             }
 
@@ -569,8 +502,6 @@ public class Course extends AppCompatActivity implements SensorEventListener {
 
             }
         });
-
-
     }
     public void showNextBtn(){
         btnNext.setEnabled(true);

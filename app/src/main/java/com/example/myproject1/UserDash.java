@@ -56,7 +56,7 @@ public class UserDash extends AppCompatActivity {
     }
 
     private void moveToProfile() {
-        Intent intent = new Intent(UserDash.this, ProfileActivity.class);
+        Intent intent = new Intent(UserDash.this, ProfileEditor.class);
         startActivity(intent);
 
     }
@@ -67,7 +67,7 @@ public class UserDash extends AppCompatActivity {
     private void logOut(){
 
         FirebaseAuth.getInstance().signOut();
-        Intent intent = new Intent(UserDash.this, MainActivity.class);
+        Intent intent = new Intent(UserDash.this, Home.class);
         startActivity(intent);
     }
 

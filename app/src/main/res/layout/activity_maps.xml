@@ -1,18 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:map="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/image_map"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:map="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/mapFrag"
-    android:name="com.google.android.gms.maps.SupportMapFragment"
-    android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:layout_weight="1"
-    tools:context=".MapsActivity" />
+
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:map="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/mapFrag"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        tools:context=".CourseCreator" />
+
+    <ImageView
+        android:id="@+id/imageMap"
+        android:layout_width="match_parent"
+        android:layout_height="43dp"
+        android:background="#FFFFFF"
+        android:soundEffectsEnabled="false"
+        android:src="@drawable/ic_baseline_map_24" />
 
     <EditText
         android:id="@+id/edittxt_coursename"
@@ -22,11 +33,13 @@
         android:hint="Name of Course"
         android:inputType="textPersonName" />
 
-    <Button
-        android:id="@+id/btnTakePoint"
-        android:layout_width="429dp"
+    <EditText
+        android:id="@+id/txt_difficulty"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Record Point"></Button>
+        android:ems="10"
+        android:hint="Difficulty"
+        android:inputType="textPersonName" />
 
     <EditText
         android:id="@+id/editTextDesc"
@@ -34,8 +47,14 @@
         android:layout_height="78dp"
         android:ems="10"
         android:gravity="start|top"
-        android:hint="Description"
+        android:hint="Starting point"
         android:inputType="textMultiLine" />
+
+    <Button
+        android:id="@+id/btnTakePoint"
+        android:layout_width="429dp"
+        android:layout_height="wrap_content"
+        android:text="Record Point"></Button>
 
     <Button
         android:id="@+id/buttonEnd"

@@ -41,7 +41,7 @@ public class AdminDash extends AppCompatActivity {
     }
 
     private void moveToMaps() {
-        Intent intent = new Intent(AdminDash.this, MapsActivity.class);
+        Intent intent = new Intent(AdminDash.this, CourseCreator.class);
         startActivity(intent);
     }
     private  void moveToCoursePicker(){

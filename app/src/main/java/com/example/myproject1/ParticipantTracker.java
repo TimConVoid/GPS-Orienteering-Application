@@ -63,6 +63,7 @@ public class ParticipantTracker extends FragmentActivity implements OnMapReadyCa
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                mMap.clear();
                 for(DataSnapshot sc : snapshot.getChildren()){
                     DataSnapshot currentLocation = sc.child("Current Location");
                     if(currentLocation.exists()) {
@@ -77,6 +78,7 @@ public class ParticipantTracker extends FragmentActivity implements OnMapReadyCa
 
                        // latLngs.add(latLng);
                     }
+
 
 
                 }

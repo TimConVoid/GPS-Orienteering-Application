@@ -35,9 +35,6 @@
             android:name=".ParticipantTracker"
             android:label="@string/title_activity_participant_tracker"></activity>
         <activity android:name=".LeaderBoard" />
-        <activity
-            android:name=".MapsActivityTestGeofence"
-            android:label="@string/title_activity_maps_test_geofence" />
 
         <receiver
             android:name=".GeofenceBroadcastReceiver"
@@ -46,13 +43,12 @@
             android:permission="TODO" />
 
         <activity android:name=".Course" />
-        <activity android:name=".MapsTester" />
         <activity android:name=".AdminDash" />
         <activity android:name=".UserDash" />
         <activity
-            android:name=".MapsActivity"
+            android:name=".CourseCreator"
             android:label="@string/title_activity_maps" />
-        <activity android:name=".ProfileActivity" />
+        <activity android:name=".ProfileEditor" />
 
         <meta-data
             android:name="com.google.android.gms.version"
@@ -61,7 +57,7 @@
         <activity android:name=".CoursePicker" />
         <activity android:name=".Register" />
         <activity android:name=".LogIn" />
-        <activity android:name=".MainActivity">
+        <activity android:name=".Home">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

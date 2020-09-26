@@ -6,14 +6,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.widget.Toast;
 
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -173,9 +172,10 @@ public class CoursePicker extends AppCompatActivity implements OnMapReadyCallbac
                             double lat = wp.child("coordinates").child("latitude").getValue(Double.class);
                             double lon = wp.child("coordinates").child("longitude").getValue(Double.class);
                             final String courseName = wp.child("courseName").getValue(String.class);
+                            String difficulty = (String) wp.child("difficulty").getValue();
                             LatLng latLng = new LatLng(lat, lon);
                             latLngs.add(latLng);
-                            Waypoint waypoint = new Waypoint(id, latLng, desc, imgSrc, courseName);
+                            Waypoint waypoint = new Waypoint(id, latLng, desc, imgSrc, courseName, difficulty);
                             myWaypoints.add(waypoint);
 
 
@@ -184,7 +184,19 @@ public class CoursePicker extends AppCompatActivity implements OnMapReadyCallbac
                           if(waypoint.getId() == 1) {
 
                            MarkerOptions marker = new MarkerOptions().position(latLng).title(courseName);
+                           if(difficulty.equals("Hard")){
+                              marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                           }else if (difficulty.equals("Intermediate")){
+                               marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+                           }else if (difficulty.equals("Easy")){
+                               marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                           } else {
+                               marker.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+
+                           }
+
                            Marker marker1 = googleMap.addMarker(marker);
+
 
                            googleMap.addMarker(marker);
 

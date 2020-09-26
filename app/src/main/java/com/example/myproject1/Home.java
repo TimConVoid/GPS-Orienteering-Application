@@ -8,9 +8,8 @@ import android.view.View;
 import android.widget.Button;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
-public class MainActivity extends AppCompatActivity {
+public class Home extends AppCompatActivity {
 
     Button btnLogin;
     Button btnReg;
@@ -64,21 +63,21 @@ public class MainActivity extends AppCompatActivity {
         });
     }
     public void moveToLogin(){
-        Intent intent = new Intent(MainActivity.this, LogIn.class);
+        Intent intent = new Intent(Home.this, LogIn.class);
         startActivity(intent);
     }
 
     public void moveToRegister(){
-        Intent intent = new Intent(MainActivity.this, Register.class);
+        Intent intent = new Intent(Home.this, Register.class);
         startActivity(intent);
     }
 
     public void moveToCoursePicker(){
-        Intent intent = new Intent(MainActivity.this, CoursePicker .class);
+        Intent intent = new Intent(Home.this, CoursePicker .class);
         startActivity(intent);
     }
     public void moveToProfile(){
-        Intent intent = new Intent(MainActivity.this, UserDash.class);
+        Intent intent = new Intent(Home.this, UserDash.class);
         startActivity(intent);
     }
 
