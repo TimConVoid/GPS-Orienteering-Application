@@ -4,7 +4,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -44,19 +47,19 @@ public class LeaderBoard extends AppCompatActivity {
         courseName = extras.getString("CourseName");
 
 
-        arrayAdapter = new ArrayAdapter<String>(this,R.layout.user_info,R.id.user_info,userTimes);
+        arrayAdapter = new ArrayAdapter<String>(this, R.layout.user_info, R.id.user_info, userTimes);
 
 
         reference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                for(DataSnapshot sc : snapshot.getChildren()){
+                for (DataSnapshot sc : snapshot.getChildren()) {
                     DataSnapshot times = sc.child("Times").child(courseName);
-                    if(times.exists()) {
+                    if (times.exists()) {
                         String name = (String) sc.child("Name").getValue();
                         String time = (String) sc.child("Times").child(courseName).getValue();
                         UserTimes userTime = new UserTimes(name, courseName, time);
-                        userTimes.add(userTime.getName() + ":        " +userTime.getTime() );
+                        userTimes.add(userTime.getName() + ":                  " + userTime.getTime());
 
                     }
                 }
@@ -72,7 +75,41 @@ public class LeaderBoard extends AppCompatActivity {
 
     }
 
-    public void populateList(ArrayList<UserTimes> userTimes){
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        if (FirebaseAuth.getInstance().getCurrentUser().getEmail().equals("admin@email.com")) {
+
+            return false;
+        } else {
+            getMenuInflater().inflate(R.menu.profile, menu);
+            return true;
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (!FirebaseAuth.getInstance().getCurrentUser().getEmail().equals("admin@email.com")) {
+            switch (item.getItemId()) {
+                case R.id.myProfile:
+                    startActivity(new Intent(LeaderBoard.this, ProfileEditor.class));
+                    return true;
+                case R.id.help:
+                    startActivity(new Intent(LeaderBoard.this, Help.class));
+                    return true;
+                case R.id.logout:
+                    FirebaseAuth.getInstance().signOut();
+                    startActivity(new Intent(LeaderBoard.this, LogIn.class));
+                    return true;
+            }
+            return false;
+
+        }
+        return false;
+
 
     }
+
+
+
+
 }

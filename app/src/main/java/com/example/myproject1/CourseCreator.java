@@ -6,9 +6,15 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -39,7 +45,7 @@ import com.google.firebase.storage.UploadTask;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class CourseCreator extends FragmentActivity implements OnMapReadyCallback {
+public class CourseCreator extends FragmentActivity implements OnMapReadyCallback, SensorEventListener {
 
         private static final int CHOOSE_IMAGE = 100;
         private GoogleMap mMap;
@@ -60,6 +66,21 @@ public class CourseCreator extends FragmentActivity implements OnMapReadyCallbac
         int id = 0;
         Uri uriMapImg;
         String mapImgURL;
+
+        //compass
+
+    private ImageView imageView;
+    private float[] rMat = new float[9];
+    private float[] orientation = new float[9];
+    private float[] mLastAccelerometer = new float[3];
+    private float[] mLastMagnetic = new float[3];
+    int mAzimuth;
+    private SensorManager sensorManager;
+    private Sensor mRotationV, mAccelerometer, mMagnetometer;
+    private boolean haveSensor = false, haveSensor2 = false;
+    private boolean mLastAccelerometerSet = false;
+    private boolean mLastMagneticSet = false;
+
 
 
 
@@ -82,6 +103,9 @@ public class CourseCreator extends FragmentActivity implements OnMapReadyCallbac
 
         difficulty = findViewById(R.id.txt_difficulty);
 
+        imageView = (ImageView) findViewById(R.id.compass);
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+
         ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, PackageManager.PERMISSION_GRANTED);
         ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, PackageManager.PERMISSION_GRANTED);
 
@@ -94,6 +118,7 @@ public class CourseCreator extends FragmentActivity implements OnMapReadyCallbac
             }
         });
 
+        start();
 
 
     }
@@ -199,6 +224,39 @@ public class CourseCreator extends FragmentActivity implements OnMapReadyCallbac
             }
         });
             }
+    public void start() {
+        if (sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR) == null) {
+            if (sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD) == null ||
+                    sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) == null) {
+                noSensorAlert();
+            } else {
+                mAccelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+                mMagnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+
+                haveSensor = sensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
+                haveSensor2 = sensorManager.registerListener(this, mMagnetometer, SensorManager.SENSOR_DELAY_UI);
+
+            }
+        } else {
+            mRotationV = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+            haveSensor = sensorManager.registerListener(this, mRotationV, SensorManager.SENSOR_DELAY_UI);
+
+        }
+
+    }
+    public void noSensorAlert() {
+        AlertDialog.Builder alertDialogue = new AlertDialog.Builder(this);
+        alertDialogue.setMessage("Your device doesn't support the compass")
+                .setCancelable(false)
+                .setNegativeButton("Close", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                });
+
+
+    }
 
     public void uploadDetails(ArrayList<Waypoint> wp){
 
@@ -228,24 +286,28 @@ public class CourseCreator extends FragmentActivity implements OnMapReadyCallbac
         }
     }
     private void uploadImageToFirebase() {
-        final StorageReference profileImgRef = FirebaseStorage.getInstance().getReference("MapImages/" + System.currentTimeMillis() + ".jpg");
+        if(name.getText().toString().isEmpty()){
+            Toast.makeText(getApplicationContext(),"Please give your route a title before uploading a map.",Toast.LENGTH_SHORT).show();
+        }else {
+            final StorageReference profileImgRef = FirebaseStorage.getInstance().getReference("MapImages/" + name.getText() + ".jpg");
 
-        if (uriMapImg != null){
-            profileImgRef.putFile(uriMapImg).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+            if (uriMapImg != null) {
+                profileImgRef.putFile(uriMapImg).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
-                    mapImgURL = taskSnapshot.getMetadata().getReference().getDownloadUrl().toString();
+                        mapImgURL = taskSnapshot.getMetadata().getReference().getDownloadUrl().toString();
 
-                }
-            })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Toast.makeText(CourseCreator.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(CourseCreator.this, e.getMessage(), Toast.LENGTH_SHORT).show();
 
-                        }
-                    });
+                            }
+                        });
+            }
         }
 
     }
@@ -255,5 +317,58 @@ public class CourseCreator extends FragmentActivity implements OnMapReadyCallbac
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(Intent.createChooser(intent, "Select Proifle Picture"), CHOOSE_IMAGE);
+    }
+    public void stop() {
+        if (haveSensor && haveSensor2) {
+            sensorManager.unregisterListener(this, mAccelerometer);
+            sensorManager.unregisterListener(this, mMagnetometer);
+        } else {
+            if (haveSensor) {
+                sensorManager.unregisterListener(this, mRotationV);
+            }
+        }
+
+
+    }
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stop();
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        start();
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
+            SensorManager.getRotationMatrixFromVector(rMat, event.values);
+            mAzimuth = (int) ((Math.toDegrees(SensorManager.getOrientation(rMat, orientation)[0]) + 360) % 360);
+
+        }
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            System.arraycopy(event.values, 0, mLastAccelerometer, 0, event.values.length);
+            mLastAccelerometerSet = true;
+        } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+            System.arraycopy(event.values, 0, mLastMagnetic, 0, event.values.length);
+            mLastMagneticSet = true;
+
+        }
+        if (mLastMagneticSet && mLastAccelerometerSet) {
+            SensorManager.getRotationMatrix(rMat, null, mLastAccelerometer, mLastMagnetic);
+            SensorManager.getOrientation(rMat, orientation);
+            mAzimuth = (int) ((Math.toDegrees(SensorManager.getOrientation(rMat, orientation)[0]) + 360) % 360);
+
+        }
+        mAzimuth = Math.round(mAzimuth);
+        imageView.setRotation(-mAzimuth);
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+
     }
 }

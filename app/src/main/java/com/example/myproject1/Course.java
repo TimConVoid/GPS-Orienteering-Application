@@ -1,7 +1,13 @@
 package com.example.myproject1;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DownloadManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -9,6 +15,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -16,12 +26,19 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.SystemClock;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.ImageView;
@@ -50,13 +67,23 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.squareup.picasso.Picasso;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Course extends AppCompatActivity implements SensorEventListener {
 
+    //DB
+    StorageReference storageReference;
+    String generatedFilePath;
 
     // Geofence
     private float GEOFENCE_RADIUS = 30;
@@ -81,10 +108,14 @@ public class Course extends AppCompatActivity implements SensorEventListener {
     private boolean mLastMagneticSet = false;
 
     // UI
+    Uri downloadUri;
+    private Animator currentAnimator;
+    private int shortAnimationDuration;
     TextView desc;
     Button btnNext, btnLeader,btnStart;
     String courseName;
     Chronometer chronometer;
+    ImageView imageMap;
     ArrayList<Waypoint> waypoints = new ArrayList<>();
 
     // Location
@@ -92,7 +123,6 @@ public class Course extends AppCompatActivity implements SensorEventListener {
     LocationManager locationManager;
 
     // User details
-    TextView userName;
     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
     String userid = user.getDisplayName();
 
@@ -116,19 +146,19 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                 moveToLeaders();
             }
         });
+        imageMap = findViewById(R.id.img_map);
         final LatLng latLng = new LatLng(65.03949, 154.39039);
-        userName = findViewById(R.id.txt_username);
         Bundle extras = getIntent().getExtras();
         courseName = extras.getString("CourseName");
         geofencingClient = LocationServices.getGeofencingClient(this);
         geofenceHelper = new GeofenceHelper(this);
         imageView = (ImageView) findViewById(R.id.compass);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        userName.setText(userid);
         chronometer = findViewById(R.id.chronometer);
         start();
         enableUserLocation();
         getLocationUpdates();
+
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         final DatabaseReference myRef = database.getReference().child("Courses").child(courseName);
         myRef.addValueEventListener(new ValueEventListener() {
@@ -191,7 +221,53 @@ public class Course extends AppCompatActivity implements SensorEventListener {
 
             }
         });
+        setMapImg();
     }
+    public void setMapImg(){
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        storageReference = storage.getReference();
+        storageReference.child("MapImages/" + courseName + ".jpg").getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+                downloadUri = uri;
+                generatedFilePath = downloadUri.toString(); /// The string(file link) that you need
+                Picasso.get().load(generatedFilePath).into(imageMap);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+
+            }
+        });
+
+        imageMap.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+                DownloadManager.Request request = new DownloadManager.Request(downloadUri);
+                request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI |
+                        DownloadManager.Request.NETWORK_MOBILE);
+
+                request.setTitle("File downloading")
+                        .setDescription("Download using download manager");
+
+                request.allowScanningByMediaScanner();
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+
+                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,"/images/"+"/"+"maps");
+                request.setMimeType("*/*");
+                downloadManager.enqueue(request);
+
+            }
+        });
+
+
+
+
+
+    }
+
+
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -244,7 +320,9 @@ public class Course extends AppCompatActivity implements SensorEventListener {
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,5000,5,locationListener);
+
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,5,0,locationListener);
+
     }
 
     public void start() {
@@ -282,6 +360,21 @@ public class Course extends AppCompatActivity implements SensorEventListener {
 
     }
 
+    @Override
+    public void onBackPressed() {
+        AlertDialog.Builder alertDialogue = new AlertDialog.Builder(this);
+        alertDialogue.setMessage("Are you sure you want to exit? You will automatically be forfeited from this course.")
+                .setCancelable(true)
+                .setPositiveButton("Exit course", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                });
+        AlertDialog alertDialog = alertDialogue.create();
+        alertDialog.show();
+
+    }
 
     private void enableUserLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -509,6 +602,39 @@ public class Course extends AppCompatActivity implements SensorEventListener {
     }
     public void hideNextBtn(){
         btnNext.setEnabled(false);
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.profile,menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.myProfile:
+                AlertDialog.Builder alertDialogue = new AlertDialog.Builder(this);
+                alertDialogue.setMessage("Are you sure you want to exit? You will automatically be forfeited from this course.")
+                        .setCancelable(true)
+                        .setPositiveButton("Exit course", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                finish();
+                            }
+                        });
+                AlertDialog alertDialog = alertDialogue.create();
+                alertDialog.show();
+                startActivity(new Intent(Course.this,ProfileEditor.class));
+                return true;
+            case R.id.help:
+                startActivity(new Intent(Course.this,Help.class));
+                return true;
+            case R.id.logout:
+                FirebaseAuth.getInstance().signOut();
+                startActivity(new Intent(Course.this, LogIn.class));
+                return true;
+        }
+        return false;
     }
 
 }

@@ -91,6 +91,7 @@ public class ProfileEditor extends AppCompatActivity {
                 }
             });
         }
+        startActivity(new Intent(ProfileEditor.this, UserDash.class));
 
     }
 
@@ -112,7 +113,7 @@ public class ProfileEditor extends AppCompatActivity {
     }
 
     private void uploadImageToFirebase() {
-        final StorageReference profileImgRef = FirebaseStorage.getInstance().getReference("profilepics/" + System.currentTimeMillis() + ".jpg");
+        final StorageReference profileImgRef = FirebaseStorage.getInstance().getReference("profilepics/" + FirebaseAuth.getInstance().getUid() + ".jpg");
 
         if (uriProfileImg != null){
             profileImgRef.putFile(uriProfileImg).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {

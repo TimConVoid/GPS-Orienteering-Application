@@ -2,8 +2,11 @@ package com.example.myproject1;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -26,7 +29,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 
-public class CoursePicker extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener{
+public class CoursePicker extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
 
     GoogleMap mMap;
@@ -50,98 +53,6 @@ public class CoursePicker extends AppCompatActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
 
 
-        /*
-
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        final DatabaseReference myRef = database.getReference().child("Courses");
-
-
-        String refValue = myRef.toString();
-
-        Log.d("Hello", refValue);
-
-
-        myRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot ds : dataSnapshot.getChildren()) {
-                    DataSnapshot waypoints = ds.child("Waypoints");
-                    for(DataSnapshot wp : waypoints.getChildren()) {
-
-
-
-                        int id = wp.child("id").getValue(Integer.class);
-                        String desc = wp.child("description").getValue(String.class);
-                        String imgSrc = wp.child("imgSrc").getValue(String.class);
-                        double lat = wp.child("coordinates").child("latitude").getValue(Double.class);
-                        double lon = wp.child("coordinates").child("longitude").getValue(Double.class);
-                        LatLng latLng = new LatLng(lat, lon);
-                        latLngs.add(latLng);
-
-                        Waypoint waypoint = new Waypoint(id, latLng, desc, imgSrc);
-                        myWaypoints.add(waypoint);
-
-
-                    }
-                }
-                Log.d("latLngAray", latLngs.toString());
-
-
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-
-
-    } */
-    /*
-    public void retrieveData(){
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        final DatabaseReference myRef = database.getReference().child("Courses");
-
-
-        String refValue = myRef.toString();
-
-        Log.d("Hello", refValue);
-
-
-        myRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot ds : dataSnapshot.getChildren()) {
-                    DataSnapshot waypoints = ds.child("Waypoints");
-                    for(DataSnapshot wp : waypoints.getChildren()) {
-
-
-
-                        int id = wp.child("id").getValue(Integer.class);
-                        String desc = wp.child("description").getValue(String.class);
-                        String imgSrc = wp.child("imgSrc").getValue(String.class);
-                        double lat = wp.child("coordinates").child("latitude").getValue(Double.class);
-                        double lon = wp.child("coordinates").child("longitude").getValue(Double.class);
-                        LatLng latLng = new LatLng(lat, lon);
-                        latLngs.add(latLng);
-
-                        Waypoint waypoint = new Waypoint(id, latLng, desc, imgSrc);
-                        myWaypoints.add(waypoint);
-                    }
-                }
-                Log.d("latLngAray", latLngs.toString());
-
-
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-    }
-
-     */
     }
 
 
@@ -152,6 +63,22 @@ public class CoursePicker extends AppCompatActivity implements OnMapReadyCallbac
 
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         final DatabaseReference myRef = database.getReference().child("Courses");
+
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
+
+
+
 
 
         String refValue = myRef.toString();
@@ -201,12 +128,12 @@ public class CoursePicker extends AppCompatActivity implements OnMapReadyCallbac
                            googleMap.addMarker(marker);
 
 
-                           // [START_EXCLUDE silent]
-                           float zoomLevel = 10.0f; //This goes up to 21
-                           googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel));
+
+                              float zoomLevel = 10.0f; //This goes up to 21
+                              googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel));
 
 
-                          // onInfoWindowClick(marker1);
+
 
 
                          }
@@ -215,16 +142,24 @@ public class CoursePicker extends AppCompatActivity implements OnMapReadyCallbac
                        googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
                            @Override
                            public void onInfoWindowClick(Marker marker) {
-                               if(FirebaseAuth.getInstance().getCurrentUser()!=null) {
+                               if(getIntent().getExtras().containsKey("Leaders")){
+                                   Intent intent = new Intent(CoursePicker.this, LeaderBoard.class);
+                                   intent.putExtra("CourseName", marker.getTitle());
+                                   startActivity(intent);
+
+                               }else {
                                    Intent intent = new Intent(CoursePicker.this, Course.class);
                                    intent.putExtra("CourseName", marker.getTitle());
                                    startActivity(intent);
-                               } else {
-                                   Intent intent = new Intent(CoursePicker.this,LeaderBoard.class);
-                                   intent.putExtra("CourseName", marker.getTitle());
-                                   startActivity(intent);
+
+
                                }
-                           }
+
+
+                               }
+
+
+
                        });
 
 

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    tools:context=".Help">
+
+    <LinearLayout
+        android:background="@drawable/cardbg1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginRight="30dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginLeft="30dp"
+        android:layout_marginBottom="30dp">
+
+
+        <TextView
+            android:id="@+id/textViewHelp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="30dp"
+            android:layout_marginLeft="30dp"
+            android:layout_marginTop="30dp"
+            android:layout_marginEnd="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_marginBottom="30dp"
+            android:text="Welcome to trailBlazer!\nThis app was created to help Orienteers navigate, and to make the whole orienteering experience smoother.
+\nOnce you have made an account with us, you can browse courses near you that have been set up by event organisers. \n
+Each marker on the course browser map represents a course. The marker colour represents the difficulty of that course.The difficulties range from:
+\nGreen : Easy \nBlue : Intermediate \nRed : Hard
+\nOnce you have selected a course, a compass will be displayed along with the starting location of the course you have selected.
+You can begin your journey once you are within the starting zone. \nOnce you have started a course, the instruction for the first waypoint will be displayed, which you must navigate to!
+\nThe next button allows you to move on to the next instruction for the next waypoint only when you have reached the waypoint you are currently being instructed to find.
+\nYou will also have access to a course map that the course orgainser will have uploaded.
+\nWhen you have reached all waypoints around the course, your time will be uploaded to the Leader Board screen, which you can view once you have finished.
+\nPlease take care when participating in a course!"
+            android:textSize="18dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </LinearLayout>
+</LinearLayout>
