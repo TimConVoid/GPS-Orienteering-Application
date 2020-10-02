@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context=".Register">
 
     <androidx.cardview.widget.CardView
@@ -27,13 +28,27 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="150dp"
+            android:layout_height="200dp"
             android:background="@color/cardview_light_background"
             android:orientation="vertical"
             android:layout_marginTop="300dp">
+            <EditText
+                android:id="@+id/edit_displayname"
+                android:layout_width="306dp"
+                android:layout_height="42dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="20dp"
+                android:background="@color/cardview_dark_background"
+                android:ems="10"
+                android:foregroundGravity="center"
+                android:gravity="center"
+                android:hint="Display Name"
+                android:textColorHint="#DAC8C4"
+                android:textColor="#ffffff"
+                android:inputType="textPersonName" />
 
             <EditText
-                android:id="@+id/edit_email"
+                android:id="@+id/edit_emailReg"
                 android:layout_width="306dp"
                 android:layout_height="42dp"
                 android:layout_gravity="center"
@@ -43,12 +58,12 @@
                 android:foregroundGravity="center"
                 android:gravity="center"
                 android:hint="Email"
-                android:textColorHint="#f939"
+                android:textColorHint="#DAC8C4"
                 android:textColor="#ffffff"
                 android:inputType="textEmailAddress" />
 
             <EditText
-                android:id="@+id/edit_password"
+                android:id="@+id/edit_passwordReg"
                 android:layout_width="306dp"
                 android:layout_height="42dp"
                 android:textColor="#ffffff"
@@ -58,7 +73,7 @@
                 android:ems="10"
                 android:gravity="center"
                 android:hint="Password"
-                android:textColorHint="#f939"
+                android:textColorHint="#DAC8C4"
                 android:inputType="textPassword" />
 
 
@@ -73,14 +88,14 @@
         android:layout_gravity="center">
 
         <Button
-            android:id="@+id/btn_login"
+            android:id="@+id/btn_register1"
             android:background="@drawable/rounded_corners"
             android:layout_width="306dp"
             android:layout_height="42dp"
             android:layout_marginTop="5dp"
             android:layout_gravity="center"
             android:gravity="center"
-            android:text="Log in"
+            android:text="Register"
             android:textColor="@color/cardview_light_background"
             />
 
@@ -92,11 +107,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center">
 
-        <TextView
-            android:id="@+id/register"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Don't have an account? Click here to register"/>
 
 
     </LinearLayout>

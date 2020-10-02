@@ -2,9 +2,15 @@ package com.example.myproject1;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,6 +25,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.security.Provider;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -29,20 +36,22 @@ public class LeaderBoard extends AppCompatActivity {
     FirebaseDatabase database;
     DatabaseReference reference;
     ArrayList<String> userTimes = new ArrayList<>();
+    ArrayList<UserTimes> myUserTimes = new ArrayList<>();
     ArrayAdapter<String> arrayAdapter;
     String courseName;
+    int count = 1;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_leader_board);
-
-
         database = FirebaseDatabase.getInstance();
         listView = findViewById(R.id.listView);
         reference = database.getReference("Users");
 
         Bundle extras = getIntent().getExtras();
+
 
         courseName = extras.getString("CourseName");
 
@@ -53,18 +62,26 @@ public class LeaderBoard extends AppCompatActivity {
         reference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (count == 1){
                 for (DataSnapshot sc : snapshot.getChildren()) {
                     DataSnapshot times = sc.child("Times").child(courseName);
                     if (times.exists()) {
                         String name = (String) sc.child("Name").getValue();
-                        String time = (String) sc.child("Times").child(courseName).getValue();
-                        UserTimes userTime = new UserTimes(name, courseName, time);
-                        userTimes.add(userTime.getName() + ":                  " + userTime.getTime());
+                        double dubTime = (Double) sc.child("Times").child(courseName).getValue();
+
+                        String time = Double.toString(dubTime);
+                        UserTimes userTime = new UserTimes(name, "Time", time + " minutes");
+
+                        myUserTimes.add(userTime);
+                        populateList();
+
+                    }
 
                     }
                 }
-                Collections.sort(userTimes);
-                listView.setAdapter(arrayAdapter);
+                count++;
+
+
             }
 
             @Override
@@ -72,6 +89,10 @@ public class LeaderBoard extends AppCompatActivity {
 
             }
         });
+
+
+
+        // listView.setAdapter(arrayAdapter);
 
     }
 
@@ -91,12 +112,15 @@ public class LeaderBoard extends AppCompatActivity {
         if (!FirebaseAuth.getInstance().getCurrentUser().getEmail().equals("admin@email.com")) {
             switch (item.getItemId()) {
                 case R.id.myProfile:
-                    startActivity(new Intent(LeaderBoard.this, ProfileEditor.class));
+                    startActivity(new Intent(LeaderBoard.this, UserDash.class));
                     return true;
                 case R.id.help:
                     startActivity(new Intent(LeaderBoard.this, Help.class));
                     return true;
                 case R.id.logout:
+                    FirebaseDatabase database = FirebaseDatabase.getInstance();
+                    DatabaseReference myRef = database.getReference("Users/"+FirebaseAuth.getInstance().getUid()+"/Current Location/");
+                    myRef.removeValue();
                     FirebaseAuth.getInstance().signOut();
                     startActivity(new Intent(LeaderBoard.this, LogIn.class));
                     return true;
@@ -107,6 +131,11 @@ public class LeaderBoard extends AppCompatActivity {
         return false;
 
 
+    }
+    public void populateList(){
+        Collections.sort(myUserTimes);
+        UserTimesAdapter userTimesAdapter = new UserTimesAdapter(LeaderBoard.this,R.layout.adapter_viewl_layout,myUserTimes);
+        listView.setAdapter(userTimesAdapter);
     }
 
 

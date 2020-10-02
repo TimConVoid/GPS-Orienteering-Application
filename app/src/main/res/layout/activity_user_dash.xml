@@ -7,6 +7,19 @@
     android:orientation="vertical"
     tools:context=".UserDash">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="100dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="Orienteering"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:textSize="50dp"
+            style="@style/TextAppearance.AppCompat.Large"/>
+    </LinearLayout>
+
     <androidx.cardview.widget.CardView
         android:id="@+id/cardView1"
         android:layout_width="match_parent"

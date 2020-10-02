@@ -139,7 +139,7 @@ public class LogIn extends AppCompatActivity implements View.OnClickListener {
 
         switch (item.getItemId()){
             case R.id.myProfile:
-                startActivity(new Intent(LogIn.this,ProfileEditor.class));
+                startActivity(new Intent(LogIn.this,UserDash.class));
                 return true;
 
             case R.id.help:

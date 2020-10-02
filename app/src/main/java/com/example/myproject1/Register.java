@@ -3,6 +3,7 @@ package com.example.myproject1;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Patterns;
 import android.view.View;
@@ -28,18 +29,18 @@ public class Register extends AppCompatActivity implements View.OnClickListener{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_register2);
+        setContentView(R.layout.activity_register);
 
 
-        txtEmail = findViewById(R.id.txt_email);
-        txtPass = findViewById(R.id.txt_pass);
+        txtEmail = findViewById(R.id.edit_emailReg);
+        txtPass = findViewById(R.id.edit_passwordReg);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
-        txtName = findViewById(R.id.txt_fullname);
+        txtName = findViewById(R.id.edit_displayname);
 
 
         mAuth = FirebaseAuth.getInstance();
 
-        findViewById(R.id.btn_register).setOnClickListener(this);
+        findViewById(R.id.btn_register1).setOnClickListener(this);
     }
 
 
@@ -84,12 +85,12 @@ public class Register extends AppCompatActivity implements View.OnClickListener{
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 progressBar.setVisibility(View.GONE);
-
-
                 if (task.isSuccessful()){
                     FirebaseUser user = mAuth.getCurrentUser();
                     user.updateProfile(profileUpdates);
                     Toast.makeText(getApplicationContext(), "User registered successfully", Toast.LENGTH_SHORT).show();
+                    finish();
+                    startActivity(new Intent(Register.this,UserDash.class));
 
                 } else {
                     if(task.getException() instanceof FirebaseAuthUserCollisionException){
@@ -107,7 +108,7 @@ public class Register extends AppCompatActivity implements View.OnClickListener{
     @Override
     public void onClick(View v) {
         switch (v.getId()){
-            case R.id.btn_register:
+            case R.id.btn_register1:
                 registerUser();
                 break;
 

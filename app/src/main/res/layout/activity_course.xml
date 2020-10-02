@@ -99,12 +99,12 @@
 
         <Button
             android:id="@+id/btnLeaders"
-            android:layout_width="match_parent"
+            android:layout_width="120dp"
             android:layout_height="match_parent"
             android:layout_marginTop="8dp"
             android:layout_marginRight="5dp"
             android:layout_marginBottom="8dp"
-            android:background="@drawable/cardbg3"
+            android:background="@drawable/roundedcorners2"
             android:text="Leader Board"
             android:layout_gravity="center"
             />
@@ -112,27 +112,29 @@
 
     <Button
         android:id="@+id/button_next"
-        android:layout_width="match_parent"
+        android:layout_width="120dp"
         android:layout_height="match_parent"
         android:layout_marginTop="8dp"
         android:layout_marginLeft="5dp"
         android:layout_marginRight="5dp"
         android:layout_marginBottom="8dp"
-        android:background="@drawable/rounded_corners"
+        android:background="@drawable/roundecorners3"
         android:text="Next Instruction"
+
         android:layout_gravity="center"
        />
 
 
     <Button
         android:id="@+id/button_start"
-        android:layout_width="match_parent"
+        android:layout_width="120sp"
         android:layout_height="match_parent"
         android:layout_marginTop="8dp"
         android:layout_marginLeft="5dp"
         android:layout_marginBottom="8dp"
         android:background="@drawable/rounded_corners"
         android:layout_gravity="center"
+        android:textColor="#ffff"
         android:text="Start Course"
          />
 

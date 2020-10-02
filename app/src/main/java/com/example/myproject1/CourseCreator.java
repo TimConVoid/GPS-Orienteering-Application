@@ -143,15 +143,6 @@ public class CourseCreator extends FragmentActivity implements OnMapReadyCallbac
             @Override
             public void onClick(View v) {
 
-                /**
-
-                locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-                try {
-                locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                } catch (SecurityException e){
-                    e.printStackTrace();
-                }
-                **/
 
                 id++;
 
@@ -259,14 +250,10 @@ public class CourseCreator extends FragmentActivity implements OnMapReadyCallbac
     }
 
     public void uploadDetails(ArrayList<Waypoint> wp){
-
-
         for(Waypoint a : wp){
             FirebaseDatabase database = FirebaseDatabase.getInstance();
             DatabaseReference myRef = database.getReference("Courses/" +name.getText().toString()+"/Waypoints").push();
-
             myRef.setValue(a);
-
         }
     }
     @Override

@@ -140,12 +140,15 @@ public class UserDash extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()){
             case R.id.myProfile:
-                startActivity(new Intent(UserDash.this,ProfileEditor.class));
+
                 return true;
             case R.id.help:
                 startActivity(new Intent(UserDash.this,Help.class));
                 return true;
             case R.id.logout:
+                FirebaseDatabase database = FirebaseDatabase.getInstance();
+                DatabaseReference myRef = database.getReference("Users/"+FirebaseAuth.getInstance().getUid()+"/Current Location/");
+                myRef.removeValue();
                 FirebaseAuth.getInstance().signOut();
                 startActivity(new Intent(UserDash.this, LogIn.class));
                 return true;

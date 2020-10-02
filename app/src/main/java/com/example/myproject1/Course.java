@@ -75,6 +75,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.sql.Time;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,7 +87,7 @@ public class Course extends AppCompatActivity implements SensorEventListener {
     String generatedFilePath;
 
     // Geofence
-    private float GEOFENCE_RADIUS = 30;
+    private float GEOFENCE_RADIUS = 40;
     private String GEOFENCE_ID = "SOME_GEOFENCE_ID";
     private int FINE_LOCATION_ACCESS_REQUEST_CODE = 10001;
     private int BACKGROUND_LOCATION_ACCESS_REQUEST_CODE = 10002;
@@ -121,6 +122,10 @@ public class Course extends AppCompatActivity implements SensorEventListener {
     // Location
     private LocationListener locationListener;
     LocationManager locationManager;
+    LocationListener locationListener2;
+    LocationManager locationManager2;
+    int locationCount = 1;
+
 
     // User details
     FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -232,6 +237,7 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                 downloadUri = uri;
                 generatedFilePath = downloadUri.toString(); /// The string(file link) that you need
                 Picasso.get().load(generatedFilePath).into(imageMap);
+                downloadImage();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -240,33 +246,33 @@ public class Course extends AppCompatActivity implements SensorEventListener {
             }
         });
 
-        imageMap.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
-                DownloadManager.Request request = new DownloadManager.Request(downloadUri);
-                request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI |
-                        DownloadManager.Request.NETWORK_MOBILE);
-
-                request.setTitle("File downloading")
-                        .setDescription("Download using download manager");
-
-                request.allowScanningByMediaScanner();
-                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-
-                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,"/images/"+"/"+"maps");
-                request.setMimeType("*/*");
-                downloadManager.enqueue(request);
-
-            }
-        });
-
-
-
-
-
     }
 
+
+    public void downloadImage() {
+        if (downloadUri != null) {
+            imageMap.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+                    DownloadManager.Request request = new DownloadManager.Request(downloadUri);
+                    request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI |
+                            DownloadManager.Request.NETWORK_MOBILE);
+
+                    request.setTitle("File downloading")
+                            .setDescription("Download using download manager");
+
+                    request.allowScanningByMediaScanner();
+                    request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+
+                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "/images/" + "/" + "maps");
+                    request.setMimeType("*/*");
+                    downloadManager.enqueue(request);
+
+                }
+            });
+        }
+    }
 
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -280,16 +286,17 @@ public class Course extends AppCompatActivity implements SensorEventListener {
         desc.setText("Course: "+CourseName+"\n Difficulty : "+difficulty + "\n Starting location: "+wp.get(0).getDescription());
     }
 
+
     private void getLocationUpdates() {
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
+                    LatLng latLng;
+                    latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                    FirebaseDatabase database = FirebaseDatabase.getInstance();
+                    DatabaseReference myRef = database.getReference("Users/" + user.getUid() + "/Current Location/");
+                    myRef.setValue(latLng);
 
-                LatLng latLng;
-                latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                FirebaseDatabase database = FirebaseDatabase.getInstance();
-                DatabaseReference myRef = database.getReference("Users/"+user.getUid()+"/Current Location/");
-                myRef.setValue(latLng);
             }
 
             @Override
@@ -321,7 +328,8 @@ public class Course extends AppCompatActivity implements SensorEventListener {
             return;
         }
 
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,5,0,locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,5000,0,locationListener);
+
 
     }
 
@@ -344,6 +352,7 @@ public class Course extends AppCompatActivity implements SensorEventListener {
 
         }
         getLocationUpdates();
+
     }
 
     public void noSensorAlert() {
@@ -369,6 +378,9 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         finish();
+                        FirebaseDatabase database = FirebaseDatabase.getInstance();
+                        DatabaseReference myRef = database.getReference("Users/"+user.getUid()+"/Current Location/");
+                        myRef.removeValue();
                     }
                 });
         AlertDialog alertDialog = alertDialogue.create();
@@ -430,7 +442,7 @@ public class Course extends AppCompatActivity implements SensorEventListener {
 
 
     public void setInstructions(final ArrayList<Waypoint> wp) {
-        hideNextBtn();
+       hideNextBtn();
         Waypoint first = wp.get(1);
         LatLng firstLatLng = first.getCoordinates();
         addGeofence(firstLatLng,GEOFENCE_RADIUS);
@@ -445,15 +457,16 @@ public class Course extends AppCompatActivity implements SensorEventListener {
             public void onClick(View v) {
 
                 if (count == wp.size()) {
-                    btnNext.setVisibility(View.GONE);
+                    btnNext.setVisibility(View.INVISIBLE);
                     btnLeader.setVisibility(View.VISIBLE);
                     double elapsedMillis = SystemClock.elapsedRealtime() - chronometer.getBase();
+                    String clockTime = (String) chronometer.getText();
                     DecimalFormat df = new DecimalFormat("#.##");
                     chronometer.stop();
-                    Toast.makeText(getApplicationContext(), "Course finished! Your time was: " + df.format(elapsedMillis*0.00001), Toast.LENGTH_SHORT).show();
-                    uploadTime(elapsedMillis);
-                    PendingIntent pendingIntent = geofenceHelper.getPendingIntent();
-                    geofencingClient.removeGeofences(pendingIntent);
+                    Toast.makeText(getApplicationContext(), "Course finished! Your time was: " + clockTime, Toast.LENGTH_SHORT).show();
+                    desc.setText("Course Finished!\nYour time: "+clockTime);
+                    uploadTime(clockTime);
+
 
                 } else {
                     Waypoint nextWaypoint = wp.get(count);
@@ -464,7 +477,7 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                     desc.setText(next);
                     count++;
                 }
-                hideNextBtn();
+              hideNextBtn();
             }
         });
 
@@ -472,6 +485,14 @@ public class Course extends AppCompatActivity implements SensorEventListener {
     }
     public void moveToLeaders() {
 
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("Users/"+user.getUid()+"/Current Location/");
+        myRef.removeValue();
+        locationManager.removeUpdates(locationListener);
+        PendingIntent pendingIntent = geofenceHelper.getPendingIntent();
+        geofencingClient.removeGeofences(pendingIntent);
+        finish();
+        onPause();
         Intent intent = new Intent(Course.this, LeaderBoard.class);
         intent.putExtra("CourseName", courseName);
         startActivity(intent);
@@ -496,7 +517,6 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                     @Override
                     public void onSuccess(Void aVoid) {
                         Log.d(TAG, "onSuccess: Geofence Added...");
-                        Toast.makeText(getApplicationContext(), "Geofence added", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -529,11 +549,13 @@ public class Course extends AppCompatActivity implements SensorEventListener {
     @Override
     protected void onPause() {
         super.onPause();
+        locationManager.removeUpdates(locationListener);
         stop();
     }
     @Override
     protected void onResume() {
         super.onResume();
+        getLocationUpdates();
         start();
     }
     @Override
@@ -564,12 +586,14 @@ public class Course extends AppCompatActivity implements SensorEventListener {
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
     }
-    public void uploadTime(final double time) {
+    public void uploadTime(final String time) {
         PendingIntent pendingIntent = geofenceHelper.getPendingIntent();
         geofencingClient.removeGeofences(pendingIntent);
         final FirebaseDatabase database = FirebaseDatabase.getInstance();
-        final DecimalFormat df = new DecimalFormat("#.##");
-        final double realTime = time*0.00001;
+       // final DecimalFormat df = new DecimalFormat("#.##");
+        //final double realTime = time*0.00001;
+        String newTime = time.replace(":",".");
+        final double doubleTime = Double.parseDouble(newTime);
         DatabaseReference myRef3 = database.getReference("Users/"+user.getUid()+"/Name");
         myRef3.setValue(user.getDisplayName());
         DatabaseReference myRef2 = database.getReference().child("Users").child(user.getUid()).child("Times").child(courseName);
@@ -577,16 +601,16 @@ public class Course extends AppCompatActivity implements SensorEventListener {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
-                    String origTime = (String) snapshot.getValue();
-                    double originalTime = Double.parseDouble(origTime);
-                    if (originalTime > realTime) {
+                    double originalTime = (double) snapshot.getValue();
+                   // double originalTime = Double.parseDouble(origTime);
+                    if (originalTime > doubleTime) {
                         final DatabaseReference myRef1 = database.getReference("Users/" + user.getUid() + "/Times/" + courseName);
-                        myRef1.setValue(df.format(realTime));
+                        myRef1.setValue(doubleTime);
 
                     }
                 } else {
                     final DatabaseReference myRef1 = database.getReference("Users/" + user.getUid() + "/Times/" + courseName);
-                    myRef1.setValue(df.format(realTime));
+                    myRef1.setValue(doubleTime);
                 }
             }
 
@@ -619,18 +643,27 @@ public class Course extends AppCompatActivity implements SensorEventListener {
                         .setPositiveButton("Exit course", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
+                                FirebaseDatabase database = FirebaseDatabase.getInstance();
+                                DatabaseReference myRef = database.getReference("Users/"+user.getUid()+"/Current Location/");
+                                myRef.removeValue();
+                                locationManager.removeUpdates(locationListener);
                                 finish();
+                                startActivity(new Intent(Course.this,UserDash.class));
                             }
                         });
                 AlertDialog alertDialog = alertDialogue.create();
                 alertDialog.show();
-                startActivity(new Intent(Course.this,ProfileEditor.class));
                 return true;
             case R.id.help:
                 startActivity(new Intent(Course.this,Help.class));
                 return true;
             case R.id.logout:
                 FirebaseAuth.getInstance().signOut();
+                FirebaseDatabase database = FirebaseDatabase.getInstance();
+                DatabaseReference myRef = database.getReference("Users/"+user.getUid()+"/Current Location/");
+                myRef.removeValue();
+                locationManager.removeUpdates(locationListener);
+                finish();
                 startActivity(new Intent(Course.this, LogIn.class));
                 return true;
         }

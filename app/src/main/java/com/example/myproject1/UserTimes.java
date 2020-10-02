@@ -1,6 +1,6 @@
 package com.example.myproject1;
 
-public class UserTimes {
+public class UserTimes implements Comparable<UserTimes> {
 
     private String name;
     private String course;
@@ -39,4 +39,14 @@ public class UserTimes {
     public void setTime(String time) {
         this.time = time;
     }
+    @Override
+    public int compareTo(UserTimes u) {
+        if (getTime() == null || u.getTime() == null) {
+            return 0;
+        }
+        return getTime().compareTo(u.getTime());
+    }
+
+
+
 }

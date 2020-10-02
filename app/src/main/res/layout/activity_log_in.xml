@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".Login">
+    tools:context=".LogIn">
 
     <androidx.cardview.widget.CardView
         android:layout_width="wrap_content"
@@ -13,7 +13,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="200sp"
+            android:layout_height="250sp"
             android:layout_marginTop="30sp"
             android:background="@color/cardview_light_background">
 
@@ -44,7 +44,7 @@
                 android:foregroundGravity="center"
                 android:gravity="center"
                 android:hint="Email"
-                android:textColorHint="#f939"
+                android:textColorHint="#DAC8C4"
                 android:textColor="#ffffff"
                 android:inputType="textEmailAddress" />
 
@@ -59,7 +59,7 @@
                 android:ems="10"
                 android:gravity="center"
                 android:hint="Password"
-                android:textColorHint="#f939"
+                android:textColorHint="#DAC8C4"
                 android:inputType="textPassword" />
 
 
@@ -70,7 +70,7 @@
 
     <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="70dp"
         android:layout_gravity="center">
 
         <Button
@@ -78,7 +78,7 @@
             android:background="@drawable/rounded_corners"
             android:layout_width="306dp"
             android:layout_height="42dp"
-            android:layout_marginTop="5dp"
+
             android:layout_gravity="center"
             android:gravity="center"
             android:text="Log in"
@@ -97,6 +97,7 @@
             android:id="@+id/register"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:text="Don't have an account? Click here to register"/>
 
 

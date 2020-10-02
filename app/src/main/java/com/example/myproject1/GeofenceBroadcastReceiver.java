@@ -21,7 +21,6 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         // TODO: This method is called when the BroadcastReceiver is receiving
         // an Intent broadcast.
-        Toast.makeText(context, "Geofence triggered...", Toast.LENGTH_SHORT).show();
         context.sendBroadcast(new Intent("GEOFENCE_TRIGGERED"));
 
         NotificationHelper notificationHelper = new NotificationHelper(context);
@@ -43,7 +42,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
         switch (transitionType) {
             case Geofence.GEOFENCE_TRANSITION_ENTER:
-                Toast.makeText(context, "GEOFENCE_TRANSITION_ENTER", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Waypoint Reached", Toast.LENGTH_SHORT).show();
                 notificationHelper.sendHighPriorityNotification("Waypoint Reached!", "", CourseCreator.class);
                 break;
             case Geofence.GEOFENCE_TRANSITION_DWELL:
